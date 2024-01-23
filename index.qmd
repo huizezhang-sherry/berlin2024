@@ -1,6 +1,5 @@
 ---
-title: Visual Diagnostics for Constrained Optimisation 
-subtitle: with Application to Projection Pursuit Guided Tours
+title: New Tools for Visualising and Explaining Multivariate Spatio-temporal Data
 author: "H. Sherry Zhang"
 institute: "Monash University, Australia"
 date: "23 Jan 2024"
@@ -10,7 +9,7 @@ format:
     html-math-method: mathjax
     slide-number: true
     show-slide-number: all
-    footer: <https://sherry-berlin2023.netlify.app/>
+    footer: <https://sherryzhang-berlin2024.netlify.app/>
     theme: serif
 ---
 
@@ -27,7 +26,7 @@ library(cubble)
 
 # Table of content {.smaller}
 
-1.  Visual diagnostic
+1.  Visual diagnostics for constrained optimisation with application to projection pursuit guided tours
       - projection pursuit guided tour
       - two diagnostic plots for comparing two optimisers
       - software: the `ferrn` package
@@ -543,7 +542,7 @@ We have developed specialised visualisation tools to diagnose optimisation in pr
 
 This allows us to understand algorithms that are not obvious to the end users
 
-## [Australian weather station data]{.r-fit-text .smaller}
+## [Australian weather station data]{.r-fit-text}{.smaller}
 
 ```{r echo = FALSE}
 options(pillar.print_max = 5, 
@@ -610,14 +609,34 @@ knitr::include_graphics(here::here("figures/cubble-operations.png"))
 knitr::include_graphics(here::here("figures/glyphmap.png"))
 ```
 
-# A pipeline workflow for computing indexes: tidyindex
+## [A pipeline workflow for computing indexes: `tidyindex`]{.r-fit-text}
+
+![](figures/tidyindex-1.png){width=100%}
+
+## [A pipeline workflow for computing indexes: `tidyindex`]{.r-fit-text}
+
+![](figures/tidyindex-2.png){width=100%}
+
+## Global Gender Gap Index
+
+::: columns
+::: {.column width=30%}
+![](figures/idx-tour.gif){width=100%}
+
+:::
+
+:::{.column width=60%}
+
+![](figures/idx-tour-static.png){height="40%"}
+:::
+:::
 
 
 ## Reference{.smaller}
 
 -   Slides created via [quarto](https://quarto.org/) available at
 
-<center><https://sherry-berlin2024.netlify.app/></center>
+<center><https://sherryzhang-berlin2024.netlify.app/></center>
 
 - All materials reproducible at 
 
@@ -630,3 +649,7 @@ knitr::include_graphics(here::here("figures/glyphmap.png"))
 -  visual diagnostic paper on R Journal: <https://journal.r-project.org/archive/2021/RJ-2021-105/index.html>
 
 -   JSS paper on the tourr package: <https://www.jstatsoft.org/article/view/v040i02>
+
+- cubble paper (accepted by JSS): <https://arxiv.org/abs/2205.00259>
+
+- tidyindex paper: <https://arxiv.org/abs/2401.05812>

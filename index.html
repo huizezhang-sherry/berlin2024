@@ -12,7 +12,7 @@
 
   <meta name="author" content="H. Sherry Zhang">
   <meta name="dcterms.date" content="2024-01-23">
-  <title>Visual Diagnostics for Constrained Optimisation</title>
+  <title>New Tools for Visualising and Explaining Multivariate Spatio-temporal Data</title>
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, minimal-ui">
@@ -392,8 +392,7 @@
     <div class="slides">
 
 <section id="title-slide" class="quarto-title-block center">
-  <h1 class="title">Visual Diagnostics for Constrained Optimisation</h1>
-  <p class="subtitle">with Application to Projection Pursuit Guided Tours</p>
+  <h1 class="title">New Tools for Visualising and Explaining Multivariate Spatio-temporal Data</h1>
 
 <div class="quarto-title-authors">
 <div class="quarto-title-author">
@@ -412,7 +411,7 @@ H. Sherry Zhang
 <section id="table-of-content" class="title-slide slide level1 smaller center">
 <h1>Table of content</h1>
 <ol type="1">
-<li>Visual diagnostic
+<li>Visual diagnostics for constrained optimisation with application to projection pursuit guided tours
 <ul>
 <li>projection pursuit guided tour</li>
 <li>two diagnostic plots for comparing two optimisers</li>
@@ -973,8 +972,8 @@ H. Sherry Zhang
 <p>We have developed specialised visualisation tools to diagnose optimisation in projection pursuit guided tour</p>
 <p>This allows us to understand algorithms that are not obvious to the end users</p>
 </section>
-<section id="australian-weather-station-data" class="slide level2">
-<h2><span class="r-fit-text smaller">Australian weather station data</span></h2>
+<section id="australian-weather-station-data" class="slide level2 smaller">
+<h2><span class="r-fit-text">Australian weather station data</span></h2>
 <div class="columns">
 <div class="column" style="width:60%;">
 <div class="cell" data-hash="index_cache/revealjs/unnamed-chunk-33_2f3bdfeb89d0fe78d11d00696171aabc">
@@ -1028,11 +1027,24 @@ H. Sherry Zhang
 <h2><span class="r-fit-text">A spatio-temporal data structure in R: <code>cubble</code></span></h2>
 <p><code>geom_glyph()</code></p>
 
-<img data-src="figures/glyphmap.png" width="3000" class="r-stretch quarto-figure-center"></section></section>
-<section>
-<section id="a-pipeline-workflow-for-computing-indexes-tidyindex" class="title-slide slide level1 center">
-<h1>A pipeline workflow for computing indexes: tidyindex</h1>
+<img data-src="figures/glyphmap.png" width="3000" class="r-stretch quarto-figure-center"></section>
+<section id="a-pipeline-workflow-for-computing-indexes-tidyindex" class="slide level2">
+<h2><span class="r-fit-text">A pipeline workflow for computing indexes: <code>tidyindex</code></span></h2>
 
+<img data-src="figures/tidyindex-1.png" style="width:100.0%" class="r-stretch"></section>
+<section id="a-pipeline-workflow-for-computing-indexes-tidyindex-1" class="slide level2">
+<h2><span class="r-fit-text">A pipeline workflow for computing indexes: <code>tidyindex</code></span></h2>
+
+<img data-src="figures/tidyindex-2.png" style="width:100.0%" class="r-stretch"></section>
+<section id="global-gender-gap-index" class="slide level2">
+<h2>Global Gender Gap Index</h2>
+<div class="columns">
+<div class="column" style="width:30%;">
+<p><img data-src="figures/idx-tour.gif" style="width:100.0%"></p>
+</div><div class="column" style="width:60%;">
+<p><img data-src="figures/idx-tour-static.png" style="height:40.0%"></p>
+</div>
+</div>
 </section>
 <section id="reference" class="slide level2 smaller">
 <h2>Reference</h2>
@@ -1040,7 +1052,7 @@ H. Sherry Zhang
 <li>Slides created via <a href="https://quarto.org/">quarto</a> available at</li>
 </ul>
 <center>
-<a href="https://sherry-berlin2024.netlify.app/" class="uri">https://sherry-berlin2024.netlify.app/</a>
+<a href="https://sherryzhang-berlin2024.netlify.app/" class="uri">https://sherryzhang-berlin2024.netlify.app/</a>
 </center>
 <ul>
 <li>All materials reproducible at</li>
@@ -1053,9 +1065,11 @@ H. Sherry Zhang
 <li><p>two packages on CRAN: <strong>tourr</strong> and <strong>ferrn</strong></p></li>
 <li><p>visual diagnostic paper on R Journal: <a href="https://journal.r-project.org/archive/2021/RJ-2021-105/index.html" class="uri">https://journal.r-project.org/archive/2021/RJ-2021-105/index.html</a></p></li>
 <li><p>JSS paper on the tourr package: <a href="https://www.jstatsoft.org/article/view/v040i02" class="uri">https://www.jstatsoft.org/article/view/v040i02</a></p></li>
+<li><p>cubble paper (accepted by JSS): <a href="https://arxiv.org/abs/2205.00259" class="uri">https://arxiv.org/abs/2205.00259</a></p></li>
+<li><p>tidyindex paper: <a href="https://arxiv.org/abs/2401.05812" class="uri">https://arxiv.org/abs/2401.05812</a></p></li>
 </ul>
 <div class="footer footer-default">
-<p><a href="https://sherry-berlin2023.netlify.app/" class="uri">https://sherry-berlin2023.netlify.app/</a></p>
+<p><a href="https://sherryzhang-berlin2024.netlify.app/" class="uri">https://sherryzhang-berlin2024.netlify.app/</a></p>
 </div>
 </section></section>
     </div>
