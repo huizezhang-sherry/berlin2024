@@ -1,0 +1,632 @@
+---
+title: Visual Diagnostics for Constrained Optimisation 
+subtitle: with Application to Projection Pursuit Guided Tours
+author: "H. Sherry Zhang"
+institute: "Monash University, Australia"
+date: "23 Jan 2024"
+css: style.css
+format: 
+  revealjs:
+    html-math-method: mathjax
+    slide-number: true
+    show-slide-number: all
+    footer: <https://sherry-berlin2023.netlify.app/>
+    theme: serif
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, cache = TRUE, fig.retina = 2)
+library(ferrn)
+library(tidyverse)
+library(patchwork)
+library(tourr)
+library(cubble)
+#files <- paste0("data/", list.files(here::here("data")))
+#purrr::walk(.x = files, ~load(here::here(.x), env = globalenv()))
+```
+
+# Table of content {.smaller}
+
+1.  Visual diagnostic
+      - projection pursuit guided tour
+      - two diagnostic plots for comparing two optimisers
+      - software: the `ferrn` package
+      - improvements made on the optimisers
+2.  My two other projects
+      - a spatio-temporal data structure in R: `cubble`
+      - a pipeline workflow for computing indexes: `tidyindex`
+
+## Data projection {.smaller}
+
+::::columns
+:::{.column width="60%"}
+-   5 variables, 1000 obs simulated
+    -   One variable ($x_2$) is a mixture normal, sampled from $\mathcal{N}(-3, 1)$ and $\mathcal{N}(3, 1)$
+    -   others are random normal
+    
+- project the data with different weights/ bases
+
+```{r echo = FALSE} 
+set.seed(1234)
+weight <- map(1:20, ~tourr::basis_random(n = 5, d= 1))
+data <- boa5 %>% as.matrix()
+proj <- map_dfr(weight, 
+                ~as_tibble(data %*% .x) %>% 
+                  mutate(id = row_number()), 
+                .id = "sim") |> 
+  tidyr::pivot_longer(cols = -c(id, sim), names_to = "proj", values_to = "value") |> 
+  mutate(proj = as.numeric(parse_number(proj)),
+         sim = as.numeric(sim))
+```
+
+```{r echo = TRUE}
+weight[[1]]
+weight[[13]]
+```
+
+:::
+
+:::{.column width="39%"}
+```{r echo = FALSE, fig.height=15}
+proj |> 
+  #left_join(matrix, by = "proj") %>%
+  ggplot() +
+  geom_density(aes(x = value, group = proj), fill = "black") +
+  facet_wrap(vars(sim), ncol = 2, labeller = label_value) +
+  theme_bw() + 
+  theme(panel.grid = element_blank(), strip.text = element_text(size = 20))
+```
+:::
+::::
+
+
+# [Optimisation in projection pursuit]{.r-fit-text} {.smaller}
+
+::: columns
+::: column
+-   Data: $\mathbf{X}_{n \times p}$; Basis: $\mathbf{A}_{p\times d}$
+-   Projection: $\mathbf{Y} = \mathbf{X} \cdot \mathbf{A}$
+-   Index function: $f: \mathbb{R}^{n \times d} \mapsto \mathbb{R}$
+-   Optimisation: $\arg \max_{\mathbf{A}} f(\mathbf{X} \cdot \mathbf{A}) ~~~ s.t. ~~~ \mathbf{A}^{\prime} \mathbf{A} = I_d$
+:::
+
+::: column
+-   5 vars ($x_1$ - $x_5$), 1000 obs simulated
+    -   One variable ($x_2$) is a mixture normal
+    -   others are random normal
+-   1D projection using the holes index: $\propto 1 -\frac{1}{n} \sum_{i = 1}^n \exp(-\frac{1}{2} y_i y_i^{\prime})$
+:::
+:::
+
+```{r fig.height=2.5}
+# set.seed(123456)
+# a <- animate_dist(
+#   boa5, tour_path = guided_tour(holes(), d = 1, search_f = search_geodesic)) 
+# first_dir <- a$basis[[1]]
+# last_dir <- tail(a$basis, 1)[[1]]
+first_dir <- matrix(c(0.34, -0.11, -0.14, 0.03, 0.92))
+last_dir <- matrix(c(0.01, -0.99, -0.01, 0.04, 0.007))
+p1 <- as.matrix(boa5) %*% first_dir |> 
+  as_tibble() |> 
+  ggplot() + 
+  geom_density(aes(x = V1), fill = "black") + 
+  theme_void() + 
+  theme(aspect.ratio = 1) + 
+  labs(x = "Projection", title = "start", y = "") + 
+  theme(panel.border = element_rect(fill = "transparent"))
+
+p2 <- as.matrix(boa5) %*% last_dir |> 
+  as_tibble() |> 
+  ggplot() + 
+  geom_density(aes(x = V1), fill = "black") + 
+  theme_void() + 
+  theme(aspect.ratio = 1) + 
+  labs(x = "Projection", title = "finish", y = "") + 
+  theme(panel.border = element_rect(fill = "transparent"))
+
+p1 | p2
+```
+
+::: notes
+```         
+- Projection basis which gives a d-dimensional projection; characterise, the direction from which the data get projected; 
+- Index function: maps the projection to a scalar, 
+- measures interestingness, theoretical results show that, depart from normal distribution, intuitive explanation, CLT, more observations,  data distributed as normal
+- Optimisation: max the index, subject to orthonormality constraint
+```
+:::
+
+# [Projection pursuit with guided tour]{.r-fit-text} {.smaller}
+
+::: columns
+::: column
+```{r echo = FALSE, fig.align="center", out.width="100%"}
+knitr::include_graphics("figures/tour-path.png")
+```
+:::
+
+::: column
+-   projection pursuit: maximises the index function to iteratively find better basis/ projection ([**blue frames**]{style="color:#2E6BA9"})
+-   guided tour: chains these projections together through interpolation (**white frames**) and produces an smooth animation
+:::
+:::
+
+::: notes
+This illustration shows how projection pursuit and guided tour works together
+
+Those are shown in the blue frames
+:::
+
+# [Projection pursuit with guided tour]{.r-fit-text} {.smaller}
+
+::: columns
+::: column
+```{r fig.height=10}
+first_dir <- matrix(c(0.34, -0.11, -0.14, 0.03, 0.92))
+last_dir <- matrix(c(0.01, -0.99, -0.01, 0.04, 0.007))
+
+p1 <- as.matrix(boa5) %*% first_dir |> 
+  as_tibble() |> 
+  ggplot() + 
+  geom_density(aes(x = V1), fill = "black") + 
+  theme_void() + 
+  theme(aspect.ratio = 1) + 
+  labs(x = "Projection", title = "start", y = "") + 
+  theme(panel.border = element_rect(fill = "transparent"), 
+        text=element_text(size=21))
+
+p2 <- as.matrix(boa5) %*% last_dir |> 
+  as_tibble() |> 
+  ggplot() + 
+  geom_density(aes(x = V1), fill = "black") + 
+  theme_void() + 
+  theme(aspect.ratio = 1) + 
+  labs(x = "Projection", title = "finish", y = "") + 
+  theme(panel.border = element_rect(fill = "transparent"), 
+        text=element_text(size=21))
+
+p1 / p2
+```
+:::
+
+::: column
+```{r eval = FALSE}
+set.seed(123456)
+dt <- boa5 |> rename(x3 = x8, x4= x9, x5= x10)
+render_gif(dt,
+           tour_path = guided_tour(holes(), d = 1, 
+                                   search_f = search_geodesic),
+            display_dist(),
+           frames = 45,
+           rescale = FALSE,
+           gif_file = here::here("figures", "tour-demo.gif"))
+
+```
+
+```{r}
+knitr::include_graphics("figures/tour-demo.gif")
+```
+:::
+:::
+
+::: notes
+Here is how the animation looks like:
+
+-   We use histogram to display 1D projection
+-   The data include 5 variables, X2 is a mixture normal and others are random normal
+-   We expect: X2 to have a weight close to 1 and others close to 0
+
+<br> </br>
+
+-   In this simple example, the optimiser works well to find the optimum
+-   but this is not the case for all the problems, as we see in the literature
+-   so we need some visual tools to help us diagnose where things go wrong
+-   A side note here: this will also be the data that we used in later examples and we are always aiming to find $x_2$ in this dataset
+:::
+
+# The tour family {.smaller}
+
+::: columns
+::: {.column width="70%"}
+-   **grand tour**: randomly selected bases
+-   **guided tour**: basis selection is optimising an index function
+-   **planned tour**: interpolates between a set of input bases
+-   **local tour**: alternating between the starting projection and randomly selected nearby projections
+
+Software in R: the [tourr](https://ggobi.github.io/tourr/index.html) package
+
+-   the Journal of Statistical Software [paper](https://www.jstatsoft.org/article/view/v040i02)
+:::
+
+::: {.column width="30%"}
+```{r fig.height=10}
+knitr::include_graphics("figures/tourr-logo.png")
+```
+:::
+:::
+
+# Motivation {.smaller}
+
+> The work also reveals inadequacies in the tour optimization algorithm, that may benefit from newly developed techniques and software tools. Exploring this area would help improve the guided tours. As new optimization techniques become available, adapting these to the guided tour would extend the technique to a broader range of problems. (Laa & Cook, 2020)
+
+-   For simulated data, the optimisers
+    -   often failed at finding the expected maxima, or
+    -   would only get close but not reach the maxima
+-   For noisy index functions it failed completely
+
+::: notes
+-   project, motivated by ursula and Di's work, that apply pp to physics.
+-   this is what they write in the paper
+:::
+
+# [How to solve this problem?]{.r-fit-text .smaller}
+
+To understand where the optimisers were failing, ideally we need to visualise the **space** and the **paths** that the optimisers take through the space.
+
+-   the space is the set of all d-dimensional projections of p-dimensional space ($\mathbf{A}_{p\times d}$)
+
+# [Two optimisers for the same problem]{.r-fit-text .smaller}
+
+```{r eval = FALSE}
+set.seed(123456)
+dt <- boa5 |> rename(x3 = x8, x4= x9, x5= x10)
+render_gif(dt,
+           tour_path = guided_tour(holes(), d = 1, 
+                                   search_f = search_better),
+            display_dist(),
+           frames = 47,
+           rescale = FALSE,
+           gif_file = here::here("figures", "tour-demo-better.gif"))
+```
+
+::: columns
+::: column
+[**Optimiser 1**:]{style="color: #2C4409"}
+
+```{r}
+knitr::include_graphics("figures/tour-demo.gif")
+```
+:::
+
+::: column
+::: fragment
+[**Optimiser 2**:]{style="color: #A56C30"}
+
+```{r}
+knitr::include_graphics("figures/tour-demo-better.gif")
+```
+:::
+:::
+:::
+
+## Reduced-space plot {.smaller}
+
+```{r fig.align='center'} 
+knitr::include_graphics("figures/pca-plot.png")
+```
+
+
+## Reduced-space plot {.smaller}
+
+::: columns
+:::{.column width="80%"}
+
+**Step 1**:  record the bases passed by the optimiser and interpolation
+
+```{r}
+holes_1d_geo
+```
+:::
+
+:::{.column width="20%"}
+
+first basis:
+
+```{r}
+holes_1d_geo$basis[[1]]
+```
+
+second:
+
+```{r}
+holes_1d_geo$basis[[2]]
+```
+
+last:
+
+```{r}
+tail(holes_1d_geo$basis, 1)[[1]]
+```
+
+:::
+
+::::
+
+## Reduced-space plot {.smaller}
+
+**Step 2**: take PCA of all the bases, along with simulated random points on the space
+
+416 obs vs. 2916 obs
+
+```{r}
+options(tibble.width = Inf) # displays all columns.
+```
+
+
+```{r}
+ferrn::compute_pca(holes_1d_geo)$aug |> 
+  dplyr::select(-row_num)
+```
+
+
+## Reduced-space plot {.smaller}
+
+**Step 3:** plot the `PC1` and `PC2` in a unit circle
+
+::::columns
+
+:::column
+![](figures/pca-plot.png)
+:::
+
+:::column
+:::{.fragment}
+
+[**Creeping random search**]{style="color: #A56C30"}:
+
+   * samples points in the entire space, 
+   * find a target basis, 
+   * interpolate towards the target
+    
+[**Pseudo derivative**]{style="color: #2C4409"}:
+   
+   * sample 10 points in the close neighbourhood
+   * find the most promising direction
+   * interpolate a step size
+
+:::
+:::
+
+::::
+
+## [Reduced-space plot with animation]{.r-fit-text} {.smaller}
+
+::: columns
+::: column
+![](figures/pca-plot.png)
+:::
+
+::: column
+```{r out.width="50%"}
+knitr::include_graphics("figures/pca.gif")
+
+```
+
+-   clearer starting points
+-   easier to compare the speed of convergence
+:::
+:::
+
+# Full space plot {.smaller}
+
+:::: columns
+
+:::column
+![](figures/tour.gif)
+:::
+
+:::column
+
+![](figures/tour-frame078.png){width=40%}
+
+![](figures/pca-plot.png){width=40%}
+:::
+
+::::
+
+
+# The ferrn package {.smaller}
+
+**F**acilitate **E**xploration of tou**RR** optimisatio**N** (ferrn), available on CRAN.
+
+::: columns
+::: {.column width="70%"}
+Four main functions:
+
+-   `explore_trace_search()`
+-   `explore_trace_interp()`
+-   `explore_space_pca()`: reduced-space plot
+-   `explore_space_tour()`: full-space plot
+:::
+
+::: {.column width="30%"}
+```{r out.width="100%"}
+knitr::include_graphics("figures/ferrn-logo.png")
+
+```
+:::
+:::
+
+## [Construct the PCA plot]{.r-fit-text} {.smaller}
+
+:::: columns
+
+::: {.column width="50%"}
+```{r eval = FALSE, echo = TRUE}
+library(tourr)
+set.seed(123456);
+animate_dist(
+  boa5, 
+  tour_path = guided_tour(
+    holes(), d = 1,
+    search_f =  search_geodesic
+    ),
+  rescale = FALSE
+  )
+
+```
+
+:::
+
+:::{.column width="50%"}
+```{r}
+knitr::include_graphics("figures/tour-demo.gif")
+```
+
+:::
+::::
+
+## [Construct the PCA plot]{.r-fit-text}{.smaller}
+
+```{r eval = FALSE, echo = TRUE}
+set.seed(123456);
+a <- animate_dist(
+  boa5, 
+  tour_path = guided_tour(holes(), d = 1, search_f =  search_geodesic),
+  rescale = FALSE
+  )
+a
+```
+
+```{r}
+options(pillar.width=2000)
+```
+
+
+```{r}
+holes_1d_geo 
+```
+
+## [Construct the PCA plot]{.r-fit-text}{.smaller}
+
+```{r eval = FALSE, echo = TRUE}
+bind_rows(<DATA>, <DATA>) %>%
+  explore_space_pca(...) +
+  scale_color_discrete_botanical()
+```
+
+```{r fig.align='center'}
+knitr::include_graphics("figures/pca-plot.png")
+```
+
+# Improvements on the optimisers
+
+## A problem of non-monotonicity{.smaller}
+
+::::columns
+
+:::{.column width="60%"}
+
+```{r fig.align='center'}
+knitr::include_graphics("figures/interrrupt.png")
+```
+:::
+
+:::{.column width="40%"}
+
+```{r fig.align='center'}
+knitr::include_graphics("figures/pca-plot.png")
+```
+:::
+::::
+
+
+## Reconciling the orientation{.smaller}
+
+```{r fig.align='center', out.height="70%"}
+knitr::include_graphics("figures/orientation.png")
+```
+
+# Summary {.smaller}
+
+We have developed specialised visualisation tools to diagnose optimisation in projection pursuit guided tour
+
+This allows us to understand algorithms that are not obvious to the end users
+
+## [Australian weather station data]{.r-fit-text .smaller}
+
+```{r echo = FALSE}
+options(pillar.print_max = 5, 
+        pillar.print_min = 5, 
+        width = 100)
+stations <- cubble::climate_aus  %>% as_tibble() %>% filter(row_number() %% 7 == 1) %>% select(-ts)
+ts <- cubble::climate_aus  %>% 
+  face_temporal() %>% 
+  as_tibble() %>% 
+  filter(id %in% stations$id)
+
+```
+
+
+::: columns
+::: {.column width="60%"}
+```{r}
+#| echo: true
+stations
+```
+
+```{r data-stations}
+#| echo: false
+#| eval: true
+oz <- ozmaps::abs_ste %>% filter(NAME != "Other Territories")
+oz_simp <- oz %>% rmapshaper::ms_simplify(keep = 0.05) 
+
+ggplot() +
+  geom_sf(data = oz_simp, fill = "grey95", color = "white") +
+  geom_point(data = stations, aes(long,lat)) + 
+  ggthemes::theme_map()
+```
+:::
+
+::: {.column width="40%"}
+```{r}
+#| echo: true
+ts
+```
+
+```{r data-ts}
+ts %>% 
+  ggplot() +
+  geom_line(aes(x = date, y = tmax, group = id), alpha = 0.4) + 
+  theme_bw()
+```
+:::
+:::
+
+## [A spatio-temporal data structure in R: `cubble`]{.r-fit-text}
+
+Cubble is a nested object built on tibble that allow easy pivoting between spatial and temporal form.
+
+```{r}
+knitr::include_graphics(here::here("figures/cubble-operations.png"))
+```
+
+
+## [A spatio-temporal data structure in R: `cubble`]{.r-fit-text}
+
+`geom_glyph()`
+
+```{r fig.align='center'}
+knitr::include_graphics(here::here("figures/glyphmap.png"))
+```
+
+# A pipeline workflow for computing indexes: tidyindex
+
+
+## Reference{.smaller}
+
+-   Slides created via [quarto](https://quarto.org/) available at
+
+<center><https://sherry-berlin2024.netlify.app/></center>
+
+- All materials reproducible at 
+
+<center><https://github.com/huizezhang-sherry/berlin2024/></center>
+
+<br>
+
+-  two packages on CRAN:  **tourr** and **ferrn** 
+
+-  visual diagnostic paper on R Journal: <https://journal.r-project.org/archive/2021/RJ-2021-105/index.html>
+
+-   JSS paper on the tourr package: <https://www.jstatsoft.org/article/view/v040i02>
